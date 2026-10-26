@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StockEasy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Sign in / Create account page (shown when nobody is logged in) ===== -->
+  <div id="auth">
+    <div class="brand-panel">
+      <b class="logo"><span>S</span>StockEasy</b>
+      <div>
+        <h2 data-t="tagline"></h2>
+        <ul>
+          <li data-t="point1"></li>
+          <li data-t="point2"></li>
+          <li data-t="point3"></li>
+        </ul>
+      </div>
+      <small data-t="footer"></small>
+    </div>
+
+    <div class="form-panel">
+      <select class="lang" onchange="setLang(this.value)">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+
+      <form id="loginForm" onsubmit="login(event)">
+        <h1 data-t="signIn"></h1>
+        <input id="lEmail" data-p="email" type="email" required>
+        <input id="lPass" data-p="password" type="password" required>
+        <button class="btn" data-t="signIn"></button>
+        <p><a href="#" data-t="noAccount" onclick="showForm('signup')"></a></p>
+      </form>
+
+      <form id="signupForm" onsubmit="signup(event)" hidden>
+        <h1 data-t="createAccount"></h1>
+        <input id="sShop" data-p="shopName" required>
+        <input id="sEmail" data-p="email" type="email" required>
+        <input id="sPass" data-p="password" type="password" required>
+        <button class="btn" data-t="createAccount"></button>
+        <p><a href="#" data-t="haveAccount" onclick="showForm('login')"></a></p>
+      </form>
+
+      <p id="authMsg"></p>
+    </div>
+  </div>
+
+  <!-- ===== The shop software (shown after login) ===== -->
+  <div id="app" hidden>
+    <header>
+      <b class="logo"><span>S</span>StockEasy</b>
+      <nav>
+        <button data-page="dashboard" data-t="dashboard" onclick="showPage('dashboard')"></button>
+        <button data-page="products" data-t="products" onclick="showPage('products')"></button>
+        <button data-page="billing" data-t="billing" onclick="showPage('billing')"></button>
+        <button data-page="orders" data-t="orders" onclick="showPage('orders')"></button>
+        <button data-page="reports" data-t="reports" onclick="showPage('reports')"></button>
+      </nav>
+      <div class="right">
+        <span id="shopName"></span>
+        <select class="lang" onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="kn">ಕನ್ನಡ</option>
+        </select>
+        <button class="btn ghost" data-t="logout" onclick="logout()"></button>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-head" id="pageHead"><h1 id="pageTitle"></h1><p id="today"></p></div>
+      <p id="msg"></p>
+
+      <!-- 1. Dashboard -->
+      <section id="dashboard">
+        <!-- Banner with the shop-shelf picture as its background -->
+        <div class="banner"><h2 id="welcome"></h2><p id="bannerDate"></p></div>
+        <div class="cards">
+          <div class="card"><span data-t="totalProducts"></span><b id="cTotal"></b></div>
+          <div class="card"><span data-t="todaySales"></span><b id="cSales"></b></div>
+          <div class="card"><span data-t="lowCount"></span><b id="cLow"></b></div>
+          <div class="card"><span data-t="stockValue"></span><b id="cValue"></b></div>
+        </div>
+        <div class="panel">
+          <h3 data-t="lowAlert"></h3>
+          <table>
+            <tr><th data-t="product"></th><th data-t="quantity"></th><th data-t="minStock"></th></tr>
+            <tbody id="lowTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. Products: add, edit, delete -->
+      <section id="products">
+        <div class="panel">
+          <form onsubmit="saveProduct(event)">
+            <input id="pName" data-p="name" required>
+            <input id="pPrice" data-p="price" type="number" min="0" required>
+            <input id="pQty" data-p="quantity" type="number" min="0" required>
+            <input id="pMin" data-p="minStock" type="number" min="0" required>
+            <button class="btn" data-t="save"></button>
+          </form>
+        </div>
+        <div class="panel">
+          <table>
+            <tr><th data-t="product"></th><th data-t="price"></th><th data-t="quantity"></th><th data-t="status"></th><th></th></tr>
+            <tbody id="productTable"></tbody>
+          </table>
+          <button class="btn ghost" data-t="shareCatalog" onclick="shareCatalog()"></button>
+        </div>
+      </section>
+
+      <!-- 3. Billing: stock reduces when the sale is completed -->
+      <section id="billing">
+        <div class="panel">
+          <div class="row">
+            <select id="billProduct"></select>
+            <input id="billQty" type="number" min="1" value="1">
+            <button class="btn" data-t="addToBill" onclick="addToBill()"></button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 data-t="currentBill"></h3>
+          <table>
+            <tr><th data-t="product"></th><th data-t="quantity"></th><th data-t="amount"></th></tr>
+            <tbody id="billTable"></tbody>
+          </table>
+          <p class="total"><span data-t="total"></span>: <b id="billTotal">₹0</b></p>
+          <button class="btn" data-t="completeSale" onclick="completeSale()"></button>
+        </div>
+      </section>
+
+      <!-- 4. Supplier orders: low-stock items sent to the supplier on WhatsApp -->
+      <section id="orders">
+        <div class="panel">
+          <div class="row"><input id="phone" data-p="phone" size="36"></div>
+          <table>
+            <tr><th data-t="product"></th><th data-t="quantity"></th><th data-t="orderQty"></th></tr>
+            <tbody id="orderTable"></tbody>
+          </table>
+          <button class="btn" data-t="sendOrder" onclick="sendOrder()"></button>
+        </div>
+      </section>
+
+      <!-- 5. Reports -->
+      <section id="reports">
+        <div class="cards">
+          <div class="card"><span data-t="totalSales"></span><b id="rTotal"></b></div>
+          <div class="card"><span data-t="best"></span><b id="rBest"></b></div>
+        </div>
+        <div class="panel">
+          <table>
+            <tr><th data-t="date"></th><th data-t="amount"></th></tr>
+            <tbody id="reportTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer><span data-t="footer"></span> | <span id="net"></span></footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
